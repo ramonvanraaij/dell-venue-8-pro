@@ -1,0 +1,12 @@
+# Build artifacts (bthci is compiled from src/bthci.c; ACPI table is built from acpi/bt0off.dsl)
+/bthci
+/src/bthci
+*.o
+*.ko
+*.aml
+acpi_override.img
+
+# Editor / OS noise
+*~
+.*.swp
+.DS_Store

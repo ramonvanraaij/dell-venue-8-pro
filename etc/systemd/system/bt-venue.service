@@ -1,0 +1,20 @@
+[Unit]
+Description=Dell Venue 8 Pro 5830 internal Bluetooth (AR3002 @3686400 on ttyS4)
+Documentation=https://gitea.vanraaij.eu/ramonvanraaij/dell-venue-8-pro
+# The AR3002 boot ROM talks at 3686400 baud; bthci powers the chip via gpiochip0
+# (lines 52/53) and attaches the N_HCI line discipline to /dev/ttyS4. Requires the
+# bt0off SSDT override (early acpi_override.img) so URT1 enumerates as /dev/ttyS4.
+After=bluetooth.service systemd-modules-load.service
+Wants=bluetooth.service
+ConditionPathExists=/sys/bus/acpi/devices/DLAC3002:00
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/modprobe hci_uart
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do [ -e /dev/ttyS4 ] && exit 0; sleep 0.5; done; echo "bt-venue: /dev/ttyS4 not present (bt0off override not active?)" >&2; exit 1'
+ExecStart=/usr/local/sbin/bthci /dev/ttyS4 3686400
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

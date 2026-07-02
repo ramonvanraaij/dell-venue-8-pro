@@ -1,0 +1,12 @@
+[Unit]
+Description=Apply ath6kl debugfs knobs (prevent AR6004 ~37min self-deauth, reason=3)
+After=multi-user.target
+Wants=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ath6kl-tune.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

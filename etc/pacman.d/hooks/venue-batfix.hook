@@ -1,0 +1,15 @@
+# Rebuild the batfix kernel module after every kernel (linux) install/upgrade.
+# An out-of-tree module is tied to one kernel ABI, so a bare kernel bump would
+# leave batfix unloadable ("invalid module format") until rebuilt. This hook
+# recompiles it for the new kernel automatically (needs linux-headers installed).
+[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Target = usr/lib/modules/*/vmlinuz
+
+[Action]
+Description = Rebuilding batfix module for the new kernel...
+When = PostTransaction
+Exec = /usr/local/sbin/venue-batfix-build.sh --hook
+NeedsTargets

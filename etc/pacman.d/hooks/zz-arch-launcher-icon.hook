@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = breeze-icons
+
+[Action]
+Description = Reapplying Arch logo over the Plasma Mobile launcher (start-here-kde) icon...
+When = PostTransaction
+Exec = /usr/local/sbin/arch-launcher-icon.sh

@@ -1,0 +1,12 @@
+# Reclassify the internal eMMC (mmcblk1) from an SD/MMC card to a fixed hard disk.
+#
+# KDE Solid/UDisks2 derive the drive type from udev: ID_DRIVE_FLASH_MMC=1 makes the
+# eMMC report StorageDrive.driveType=SdMmc. ksystemstats' disk plugin skips SD/MMC
+# drives (treating them as removable cards), so it creates NO disk sensors for the
+# eMMC and the Plasma System Monitor "Disks" widget shows nothing ("no regular disks").
+#
+# Clearing the flash-MMC udev flags makes UDisks2/Solid report driveType=HardDisk, so
+# ksystemstats enumerates the eMMC and its usage/IO sensors (disk/mmcblk1, disk/<uuid>,
+# disk/all) populate. mmcblk1 is the internal eMMC on this device (mmcblk0 is the
+# SDIO Wi-Fi); adjust the KERNEL match if your eMMC enumerates differently.
+SUBSYSTEM=="block", KERNEL=="mmcblk1", ENV{ID_DRIVE_FLASH_MMC}="", ENV{ID_DRIVE_MEDIA_FLASH_MMC}=""
