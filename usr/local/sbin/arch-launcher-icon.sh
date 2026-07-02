@@ -32,14 +32,14 @@
 set -o errexit -o nounset -o pipefail
 
 # --- Configuration ---
-readonly ARCH_LOGO="/usr/share/pixmaps/archlinux-logo.svg" # from the archlinux-logo package
+readonly ARCH_LOGO="/usr/share/pixmaps/archlinux-logo.svg" # ships in the base 'filesystem' package
 readonly ICON_THEMES=(/usr/share/icons/breeze /usr/share/icons/breeze-dark)
 readonly BACKUP="/var/backups/arch-launcher-icon/start-here-kde-breeze-orig.tgz" # fixed path (runs as root)
 
 # --- Main ---
 # The Arch logo is mandatory; skip silently if the package is absent (the
 # pacman hook must not abort a transaction).
-[ -r "${ARCH_LOGO}" ] || { echo "missing ${ARCH_LOGO} (install archlinux-logo)" >&2; exit 0; }
+[ -r "${ARCH_LOGO}" ] || { echo "missing ${ARCH_LOGO} (part of the base 'filesystem' package)" >&2; exit 0; }
 
 # Back up the packaged originals once, so the change can be reverted.
 if [ ! -e "${BACKUP}" ]; then

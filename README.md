@@ -31,6 +31,24 @@ etc/pacman.d/hooks/venue-batfix.hook           -> /etc/pacman.d/hooks/venue-batf
 etc/modules-load.d/venue-batfix.conf           -> /etc/modules-load.d/venue-batfix.conf
 ```
 
+## Install
+
+To apply everything at once, run the install script from the repo root:
+
+```
+sudo ./install.sh
+```
+
+It is idempotent (safe to re-run) and does what the per-fix sections below describe: installs
+the packages, copies each config file into place, builds and installs `bthci` and the `batfix`
+kernel module, builds the `bt0off` ACPI override and adds it to the systemd-boot loader entries
+(backing each entry up first), applies the runtime settings, and enables the services. Reboot
+afterwards to pick up the ACPI override (`/dev/ttyS4` + Bluetooth), the 5 GHz regulatory domain,
+the `batfix` module, and the boot-stability kernel options.
+
+The per-fix sections below explain each change and its manual steps, for reference or to apply
+them selectively.
+
 ## Hardware
 
 - SoC: Intel Atom Z3740D (Bay Trail-T), 4 cores
@@ -166,7 +184,6 @@ revert those files, `etc/pacman.d/hooks/zz-arch-launcher-icon.hook` re-runs the 
 every `breeze-icons` transaction.
 
 ```
-sudo pacman -S --needed archlinux-logo       # provides /usr/share/pixmaps/archlinux-logo.svg
 sudo cp usr/local/sbin/arch-launcher-icon.sh /usr/local/sbin/ && sudo chmod +x /usr/local/sbin/arch-launcher-icon.sh
 sudo cp etc/pacman.d/hooks/zz-arch-launcher-icon.hook /etc/pacman.d/hooks/
 sudo /usr/local/sbin/arch-launcher-icon.sh   # apply now; reboot (or restart plasmashell) to see it
