@@ -5,6 +5,10 @@ Dell Venue 8 Pro 5830 (model TD01001, Bay Trail-T / Atom Z3740D, 2 GB RAM). Netw
 addresses and hardware identifiers are shown as placeholders (e.g. `<TABLET_IP>`,
 `<WIFI_MAC>`); substitute your own.
 
+The story behind this repo - the weeks-long Bluetooth reverse-engineering and the single
+baud-rate value that turned out to be the whole answer - is written up on my blog:
+[The Bluetooth That Was Never Dead: My Dell Venue 8 Pro Baud-Rate Journey](https://ramon.vanraaij.eu/the-bluetooth-that-was-never-dead-my-dell-venue-8-pro-baud-rate-journey/).
+
 The actual config files live in this repo under their real system paths, so they can be
 copied straight into place:
 
