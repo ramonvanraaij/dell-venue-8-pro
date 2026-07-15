@@ -1,16 +1,48 @@
-# Dell Venue 8 Pro 5830 - Arch Linux setup and fixes
+# 📱 Dell Venue 8 Pro 5830: Arch Linux Setup & Fixes
 
-Working configuration and fixes for running Arch Linux (Plasma Mobile, Wayland) on the
-Dell Venue 8 Pro 5830 (model TD01001, Bay Trail-T / Atom Z3740D, 2 GB RAM). Network
-addresses and hardware identifiers are shown as placeholders (e.g. `<TABLET_IP>`,
-`<WIFI_MAC>`); substitute your own.
+[![Arch Linux](https://img.shields.io/badge/Arch%20Linux-Bay%20Trail--T-1793d1?logo=archlinux&logoColor=white&style=flat-square)](https://archlinux.org)
+[![Plasma Mobile](https://img.shields.io/badge/Plasma%20Mobile-Wayland-54a3d8?logo=kde&logoColor=white&style=flat-square)](https://plasma-mobile.org)
+[![License](https://img.shields.io/badge/License-BSD--3--Clause%20%2B%20GPL--2.0-blue?style=flat-square)](LICENSE.md)
+[![Blog](https://img.shields.io/badge/Blog-The%20Bluetooth%20That%20Was%20Never%20Dead-orange?style=flat-square)](https://ramon.vanraaij.eu/the-bluetooth-that-was-never-dead-my-dell-venue-8-pro-baud-rate-journey/)
 
-The story behind this repo - the weeks-long Bluetooth reverse-engineering and the single
-baud-rate value that turned out to be the whole answer - is written up on my blog:
-[The Bluetooth That Was Never Dead: My Dell Venue 8 Pro Baud-Rate Journey](https://ramon.vanraaij.eu/the-bluetooth-that-was-never-dead-my-dell-venue-8-pro-baud-rate-journey/).
+This repository provides a working configuration and fixes for running **Arch Linux** (Plasma Mobile, Wayland) on the **Dell Venue 8 Pro 5830** (model TD01001, Bay Trail-T / Atom Z3740D, 2 GB RAM). Network addresses and hardware identifiers are shown as placeholders (e.g. `<TABLET_IP>`, `<WIFI_MAC>`); substitute your own.
 
-The actual config files live in this repo under their real system paths, so they can be
-copied straight into place:
+📖 The story behind this repo - the weeks-long Bluetooth reverse-engineering and the single baud-rate value that turned out to be the whole answer - is written up on my blog: [The Bluetooth That Was Never Dead: My Dell Venue 8 Pro Baud-Rate Journey](https://ramon.vanraaij.eu/the-bluetooth-that-was-never-dead-my-dell-venue-8-pro-baud-rate-journey/).
+
+---
+
+## 🚀 Overview
+
+Every fix in this repo is a real, verified solution to a problem this tablet had running Arch Linux, and an idempotent install script applies everything at once.
+
+### ✨ Key Fixes
+*   **📶 Wi-Fi stability:** Cures the ~37-minute firmware self-deauth disconnect (the important one).
+*   **📡 5 GHz access:** Regulatory domain setup so DFS channels work.
+*   **🔵 Bluetooth:** The internal AR3002 works - the ROM talks at **3686400 baud** (SSDT override + `bthci` tool + boot service, no firmware download needed).
+*   **🔋 Battery:** `batfix` kernel module masks the spurious 0% warning on AC plug/unplug.
+*   **🧊 Boot stability:** Kernel options that stop Bay Trail deep-C-state freezes.
+*   **🗜️ zram:** Compressed swap tuned for the 2 GB of RAM.
+*   **🎨 Plasma Mobile polish:** Arch logo on the launcher home button, working Disks widget in System Monitor.
+*   **⚙️ One-shot install:** `install.sh` applies everything idempotently.
+
+---
+
+## 🖥️ Hardware
+
+| Component | Details |
+| :--- | :--- |
+| **SoC** | Intel Atom Z3740D (Bay Trail-T), 4 cores |
+| **RAM / Storage** | 2 GB; eMMC storage (btrfs root, subvol `@`) |
+| **PMIC** | Intel Crystal Cove (`INT33FD`) |
+| **Wi-Fi** | Atheros AR6004 hw3.0, SDIO, `ath6kl` driver, firmware `fw-5.bin` (3.5.0.349-1) |
+| **Bluetooth** | Atheros AR3002 (ACPI `DLAC3002`), HCI-UART on the Bay Trail HSUART (`ttyS4`); works (see below - the ROM runs at 3686400 baud) |
+| **Desktop** | Plasma Mobile on Wayland, SDDM autologin |
+
+---
+
+## 📂 Repository Layout
+
+The actual config files live in this repo under their real system paths, so they can be copied straight into place:
 
 ```
 etc/modprobe.d/ath6kl.conf                     -> /etc/modprobe.d/ath6kl.conf
@@ -35,11 +67,15 @@ etc/pacman.d/hooks/venue-batfix.hook           -> /etc/pacman.d/hooks/venue-batf
 etc/modules-load.d/venue-batfix.conf           -> /etc/modules-load.d/venue-batfix.conf
 ```
 
-## Install
+[`PACKAGES.md`](PACKAGES.md) records the packages explicitly installed on the tablet, grouped by purpose.
+
+---
+
+## ⚡ Installation
 
 To apply everything at once, run the install script from the repo root:
 
-```
+```bash
 sudo ./install.sh
 ```
 
@@ -53,18 +89,11 @@ the `batfix` module, and the boot-stability kernel options.
 The per-fix sections below explain each change and its manual steps, for reference or to apply
 them selectively.
 
-## Hardware
+---
 
-- SoC: Intel Atom Z3740D (Bay Trail-T), 4 cores
-- RAM: 2 GB; eMMC storage (btrfs root, subvol `@`)
-- PMIC: Intel Crystal Cove (`INT33FD`)
-- Wi-Fi: Atheros AR6004 hw3.0, SDIO, `ath6kl` driver, firmware `fw-5.bin` (3.5.0.349-1)
-- Bluetooth: Atheros AR3002 (ACPI `DLAC3002`), HCI-UART on the Bay Trail HSUART (`ttyS4`); works (see below - the ROM runs at 3686400 baud)
-- Desktop: Plasma Mobile on Wayland, SDDM autologin
+## 🔧 Fixes
 
-## Fixes
-
-### Wi-Fi: ~37-minute disconnect (the important one)
+### 📶 Wi-Fi: ~37-minute disconnect (the important one)
 
 Symptom: the link dies to "unreachable" after ~35-40 min, usually needing a reboot. The
 journal shows a station-side firmware self-deauth (`CTRL-EVENT-DISCONNECTED reason=3
@@ -81,13 +110,13 @@ drop on every prior boot. When reading the node by hand, use the explicit `phy0`
 `phy*` glob expanded by your non-root shell before `sudo` comes back empty (debugfs is
 root-only); the service runs as root, so its own `phy*` glob works.
 
-```
+```bash
 sudo cp usr/local/sbin/ath6kl-tune.sh /usr/local/sbin/ && sudo chmod +x /usr/local/sbin/ath6kl-tune.sh
 sudo cp etc/systemd/system/ath6kl-tune.service /etc/systemd/system/
 sudo systemctl enable --now ath6kl-tune.service
 ```
 
-### Wi-Fi: 5 GHz access
+### 📡 Wi-Fi: 5 GHz access
 
 `wireless-regdb` was not installed, so `/lib/firmware/regulatory.db` was missing and the
 regulatory domain stayed at `00` (world), which forbids all 5 GHz channels - `iw reg set`
@@ -95,7 +124,7 @@ was silently a no-op.
 
 Fix: install the regdb and set the domain early, before NetworkManager associates:
 
-```
+```bash
 sudo pacman -S wireless-regdb
 sudo cp etc/modprobe.d/cfg80211-regdom.conf /etc/modprobe.d/   # options cfg80211 ieee80211_regdom=NL
 sudo reboot
@@ -109,24 +138,24 @@ even miss the DFS 5 GHz BSS entirely). Staying on 5 GHz is also the clean way to
 Wi-Fi/Bluetooth coexistence: the internal Bluetooth is 2.4 GHz-only, so with Wi-Fi on 5 GHz
 the two radios no longer share the band and stop fighting.
 
-### Wi-Fi: firmware self-heal
+### 🩹 Wi-Fi: firmware self-heal
 
 `etc/modprobe.d/ath6kl.conf` enables `recovery_enable=1 heart_beat_poll=2000` so the
 driver resets/recovers the AR6004 if its firmware asserts or hangs. (Belt-and-suspenders;
 the `disconnect_timeout` fix above is what actually prevents the ~37-min drop.)
 
-### MAC randomization off
+### 🎲 MAC randomization off
 
 `etc/NetworkManager/conf.d/30-no-mac-rand.conf` disables scan MAC randomization - ath6kl
 does not support it (`set-hw-addr ... failure 95 Operation not supported`), which spammed
 the journal and interfered with reassociation.
 
-### Power management
+### 🔌 Power management
 
 The modern stack is already in place and preferred: `power-profiles-daemon` +
 `intel_pstate` (passive) + `schedutil`. Added on top, non-conflicting:
 
-```
+```bash
 sudo pacman -S powertop acpi thermald
 sudo systemctl enable --now thermald          # thermal management for the fanless tablet
 sudo cp etc/sysctl.d/99-venue-power.conf /etc/sysctl.d/ && sudo sysctl --system
@@ -136,12 +165,12 @@ sudo cp etc/sysctl.d/99-venue-power.conf /etc/sysctl.d/ && sudo sysctl --system
 The dated manual studioteabag scripts (forcing `no_turbo`, a fixed governor, offlining
 cores) are intentionally skipped - they fight power-profiles-daemon.
 
-### zram (2 GB RAM)
+### 🗜️ zram (2 GB RAM)
 
 The `zram-generator` package provides RAM-backed compressed swap; sized to full RAM with
 zstd, plus sysctl tuning to prefer it.
 
-```
+```bash
 sudo pacman -S zram-generator
 sudo cp etc/systemd/zram-generator.conf /etc/systemd/
 sudo cp etc/sysctl.d/99-zram-tablet.conf /etc/sysctl.d/ && sudo sysctl --system
@@ -152,7 +181,7 @@ sudo systemctl daemon-reload && sudo systemctl start dev-zram0.swap   # or reboo
 `swap-priority = 100`. `99-zram-tablet.conf`: `vm.swappiness=150`, `vm.page-cluster=0`.
 The kernel cmdline also sets `zswap.enabled=0` (zram is used instead).
 
-### Boot-to-desktop stability (Bay Trail freezes)
+### 🧊 Boot-to-desktop stability (Bay Trail freezes)
 
 Bay Trail Atom hangs/freezes in deep idle C-states - on this tablet that showed up as an
 intermittent freeze on the SDDM splash during boot. The fix is in the kernel command line
@@ -168,13 +197,13 @@ If a frozen splash still happens once in a while, the session has usually actual
 behind it; `sudo systemctl restart sddm` (or kill the stale `kwin_wayland`/`plasmashell`
 and restart SDDM) recovers it without a reboot.
 
-### Coredump disable (slow eMMC)
+### 🚫 Coredump disable (slow eMMC)
 
 `etc/systemd/coredump.conf.d/disable-storage.conf` sets `Storage=none` /
 `ProcessSizeMax=0`. The eMMC is far too slow to process core dumps; a crash-loop otherwise
 turns coredump processing into a disk-saturating freeze.
 
-### Launcher home button: Arch logo
+### 🎨 Launcher home button: Arch logo
 
 The Plasma Mobile navigation panel's centre home button shows the Plasma "cashew"
 (`start-here-kde`). To match the device's Arch branding it is replaced with the Arch logo.
@@ -187,7 +216,7 @@ SVGs in place with `/usr/share/pixmaps/archlinux-logo.svg`. Because `breeze-icon
 revert those files, `etc/pacman.d/hooks/zz-arch-launcher-icon.hook` re-runs the script after
 every `breeze-icons` transaction.
 
-```
+```bash
 sudo cp usr/local/sbin/arch-launcher-icon.sh /usr/local/sbin/ && sudo chmod +x /usr/local/sbin/arch-launcher-icon.sh
 sudo cp etc/pacman.d/hooks/zz-arch-launcher-icon.hook /etc/pacman.d/hooks/
 sudo /usr/local/sbin/arch-launcher-icon.sh   # apply now; reboot (or restart plasmashell) to see it
@@ -197,7 +226,7 @@ The originals are backed up to `/var/backups/arch-launcher-icon/` before the fir
 replacement (the script runs as root, via the pacman hook). To revert, restore them and
 remove the hook.
 
-### System Monitor: Disks widget (eMMC shows as "no regular disks")
+### 📊 System Monitor: Disks widget (eMMC shows as "no regular disks")
 
 The Plasma System Monitor "Disks" widget (Overview page) was empty. The internal eMMC
 (`mmcblk1`) is reported by udev as flash media (`ID_DRIVE_FLASH_MMC=1`), so KDE
@@ -209,7 +238,7 @@ Fix: `etc/udev/rules.d/99-emmc-fixed-disk.rules` clears the flash-MMC udev flags
 `mmcblk1`, so Solid reports `driveType=HardDisk`; ksystemstats then enumerates the eMMC
 (`disk/mmcblk1`, `disk/<uuid>`, and `disk/all` with real `used`/`total`).
 
-```
+```bash
 sudo cp etc/udev/rules.d/99-emmc-fixed-disk.rules /etc/udev/rules.d/
 sudo udevadm control --reload && sudo udevadm trigger --name-match=mmcblk1
 sudo systemctl restart udisks2          # then re-login or reboot so ksystemstats re-enumerates
@@ -219,7 +248,7 @@ sudo systemctl restart udisks2          # then re-login or reboot so ksystemstat
 face to a pie of `disk/all/used` (matching the CPU/Memory faces); with the udev rule in
 place the stock widget works too.
 
-### Bluetooth: internal AR3002 (works - the ROM runs at 3686400 baud)
+### 🔵 Bluetooth: internal AR3002 (works - the ROM runs at 3686400 baud)
 
 The internal Bluetooth (AR3002 / `DLAC3002`, HCI-UART on the Bay Trail HS-UART) works. The
 one thing that made it look "dead" through a long investigation was the **baud rate**: the
@@ -234,26 +263,26 @@ is why the stock tools time out.)
 
 Three pieces make it work and persist across reboots:
 
-1. **`bt0off` SSDT override** (`acpi/bt0off.dsl`) - gives `\_SB.URT1.BTH0` an `_STA` that
-   returns 0, so the HS-UART enumerates as a plain `/dev/ttyS4` instead of an ACPI serdev
-   child. Built into `/boot/acpi_override.img` and loaded as an early initrd (add
-   `initrd /acpi_override.img` *before* the main initramfs line in the systemd-boot entry;
-   the build/install steps are in the file header). Reversible by removing that initrd line.
-2. **`bthci`** (`src/bthci.c`) - a small self-contained tool that powers the chip via the
-   gpio character device (`gpiochip0` = `INT33FC:00` = `\_SB.GPO0`, line 52 = power/enable,
-   line 53 = wake), sets `ttyS4` to 3686400 + hardware flow control via `termios2`/`BOTHER`,
-   and attaches the `N_HCI` line discipline (`HCI_UART_H4`) so the kernel exposes `hci0`. It
-   uses only stable kernel ABIs (gpio chardev + line discipline), so nothing here needs a
-   custom kernel module and it survives kernel upgrades. Build: `gcc -O2 -o bthci src/bthci.c`,
-   install to `/usr/local/sbin/bthci`.
-3. **`bt-venue.service`** - runs `bthci` at boot (after loading `hci_uart` and waiting for
-   `/dev/ttyS4`); `bluetoothd` then auto-enables the adapter. `systemctl enable --now
-   bt-venue.service`.
+1.  **`bt0off` SSDT override** (`acpi/bt0off.dsl`) - gives `\_SB.URT1.BTH0` an `_STA` that
+    returns 0, so the HS-UART enumerates as a plain `/dev/ttyS4` instead of an ACPI serdev
+    child. Built into `/boot/acpi_override.img` and loaded as an early initrd (add
+    `initrd /acpi_override.img` *before* the main initramfs line in the systemd-boot entry;
+    the build/install steps are in the file header). Reversible by removing that initrd line.
+2.  **`bthci`** (`src/bthci.c`) - a small self-contained tool that powers the chip via the
+    gpio character device (`gpiochip0` = `INT33FC:00` = `\_SB.GPO0`, line 52 = power/enable,
+    line 53 = wake), sets `ttyS4` to 3686400 + hardware flow control via `termios2`/`BOTHER`,
+    and attaches the `N_HCI` line discipline (`HCI_UART_H4`) so the kernel exposes `hci0`. It
+    uses only stable kernel ABIs (gpio chardev + line discipline), so nothing here needs a
+    custom kernel module and it survives kernel upgrades. Build: `gcc -O2 -o bthci src/bthci.c`,
+    install to `/usr/local/sbin/bthci`.
+3.  **`bt-venue.service`** - runs `bthci` at boot (after loading `hci_uart` and waiting for
+    `/dev/ttyS4`); `bluetoothd` then auto-enables the adapter. `systemctl enable --now
+    bt-venue.service`.
 
-`BLUETOOTH.md` tells the full story (why it looked dead for so long, every theory that got
+[`BLUETOOTH.md`](BLUETOOTH.md) tells the full story (why it looked dead for so long, every theory that got
 ruled out, and the anticlimactic baud-rate reveal).
 
-### Battery: spurious 0% warning on AC transition
+### 🔋 Battery: spurious 0% warning on AC transition
 
 On every AC plug/unplug the tablet's ACPI firmware returns an all-zero `_BST` (voltage /
 charge / capacity all 0, status "Not charging") for ~1.5 s. UPower reports that momentary
@@ -270,7 +299,7 @@ masked. It uses no fixed struct offsets (the layout comes from the kernel header
 recompiles cleanly, but it is out-of-tree and must be rebuilt after a kernel upgrade -
 `etc/pacman.d/hooks/venue-batfix.hook` does that automatically via `venue-batfix-build.sh`.
 
-```
+```bash
 sudo pacman -S --needed linux-headers          # required to build the module
 sudo mkdir -p /usr/local/src/venue-batfix
 sudo cp usr/local/src/venue-batfix/{batfix.c,Makefile} /usr/local/src/venue-batfix/
@@ -281,5 +310,30 @@ sudo /usr/local/sbin/venue-batfix-build.sh    # build + install into the kernel 
 sudo modprobe batfix                          # load now (also loads at boot)
 ```
 
-The module is GPL-2.0 (a kprobe module must be); everything else in the repo is BSD 3-Clause.
-See `LICENSE.md`.
+---
+
+## 📜 License
+
+The `batfix` kernel module is **GPL-2.0** (a kprobe module must be); everything else in
+this repo is **BSD 3-Clause**. See [`LICENSE.md`](LICENSE.md) for details.
+
+---
+
+## 🤝 Credits & Maintenance
+
+Developed and maintained by **[Rámon van Raaij](https://ramon.vanraaij.eu)** (2026).
+
+*   **🦋 Bluesky:** [@ramonvanraaij.nl](https://bsky.app/profile/ramonvanraaij.nl)
+*   **🐙 GitHub:** [@ramonvanraaij](https://github.com/ramonvanraaij)
+*   **🌐 Website:** [ramon.vanraaij.eu](https://ramon.vanraaij.eu)
+
+---
+
+## ☕ Buy me a Coffee
+
+If you found this project helpful, informative, or if it saved you some time, consider supporting my work! Your support motivates me to keep building and sharing.
+
+*   **💳 [Bunq.me](https://bunq.me/ramonvanraaij)** (iDeal, Bancontact, Cards)
+*   **🅿️ [PayPal](http://paypal.me/ramonvanraaij)**
+
+Thank you for your support! ❤️
