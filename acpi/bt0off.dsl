@@ -6,6 +6,9 @@
  * tool needs (it drives the port directly at 3686400 baud). Loaded as an early
  * initrd ACPI table upgrade.
  *
+ * SPDX-License-Identifier: BSD-3-Clause
+ * License: BSD-3-Clause
+ *
  * Build + install:
  *   iasl -tc bt0off.dsl                       # -> bt0off.aml
  *   mkdir -p kernel/firmware/acpi

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
 # Kbuild makefile for the batfix kernel module (see batfix.c).
 # The userspace bthci tool is built separately: gcc -O2 -o bthci bthci.c
 #

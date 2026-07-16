@@ -4,6 +4,7 @@
 # Build + install the batfix kernel module (Dell Venue 8 Pro 5830)
 #
 # Copyright (c) 2026 Rámon van Raaij
+# SPDX-License-Identifier: BSD-3-Clause
 # License: BSD-3-Clause
 # Author: Rámon van Raaij | Bluesky: @ramonvanraaij.nl | GitHub: https://github.com/ramonvanraaij | Website: https://ramon.vanraaij.eu
 #
